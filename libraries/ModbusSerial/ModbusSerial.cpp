@@ -18,6 +18,34 @@ byte ModbusSerial::getSlaveId() {
     return _slaveId;
 }
 
+#if defined(__arm__) && defined(_SAM3X8E_) // Arduino Due compatible
+/*
+ * Remark: The Arduino Due also uses 8N1 format, this does not respect the 
+ * MODBUS over serial line specification and implementation...
+ * TODO: This can be changed using low level instructions.
+ */
+bool ModbusSerial::config(Serial_* port, long baud, int txPin) {
+    this->_port = port;
+    (*port).begin(baud);
+
+    delay(2000);
+
+    if (txPin >= 0) {
+        pinMode(txPin, OUTPUT);
+        digitalWrite(txPin, LOW);
+    }
+
+    if (baud > 19200) {
+        _t15 = 750;
+        _t35 = 1750;
+    } else {
+        _t15 = 16500000UL/baud; // 1T * 1.5 = T1.5, 1T = 11 bits
+        _t35 = 38500000UL/baud; // 1T * 3.5 = T3.5, 1T = 11 bits
+    }
+
+    return true;
+}
+#else
 bool ModbusSerial::config(HardwareSerial* port, long baud, byte parity, int txPin) {
     this->_port = port;
     this->_txPin = txPin;
@@ -47,6 +75,7 @@ bool ModbusSerial::config(HardwareSerial* port, long baud, byte parity, int txPi
 
     return true;
 }
+#endif
 
 #ifdef USE_SOFTWARE_SERIAL
 /*

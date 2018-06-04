@@ -83,8 +83,11 @@ class ModbusSerial : public Modbus {
          * -1 if not used.
          * @return true, false if error occured
          */
-        bool config(HardwareSerial * port, long baud, byte parity=MB_PARITY_EVEN, int txenPin=-1);
-
+        #if defined(__arm__) && defined(_SAM3X8E_) // Arduino Due compatible
+		bool config(Serial_* port, long baud, int txenPin=-1);
+		#else
+		bool config(HardwareSerial * port, long baud, byte parity=MB_PARITY_EVEN, int txenPin=-1);
+		#endif
 #ifdef __DOXYGEN__
         /**
          * @brief Connect an ModbusSerial object to a software serial port
@@ -114,6 +117,7 @@ class ModbusSerial : public Modbus {
         #ifdef USE_SOFTWARE_SERIAL
         bool config(SoftwareSerial* port, long baud, int txenPin=-1);
         #endif
+		
         #ifdef __AVR_ATmega32U4__
         bool config(Serial_ * port, long baud, byte parity=MB_PARITY_EVEN, int txenPin=-1);
         #endif
